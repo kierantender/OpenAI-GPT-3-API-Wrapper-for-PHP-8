@@ -1,10 +1,10 @@
-<?php
-class OpenAI{
+<php
+class OpenAIownapikey{
 
     function __construct(
-        public $secretKey = 'Bearer <API_KEY>',
+        public $secretKey,
         public $baseURL = "https://api.openai.com/v1/",
-        private $defaultEngine = "davinci" // ada, babbage, "content-filter-alpha-c4, "content-filter-dev, curie, cursing-filter-v6,
+        private $defaultEngine = "davinci" // ada, babbage, etc
     ) {}
 
     public function setDefaultEngine(string $defaultEngine): void{
@@ -13,6 +13,7 @@ class OpenAI{
 
     public function _curl(string $url, string $type = "POST", string $postFields = ""): array|stdClass|string {
         $url = $this->baseURL . $url;
+        echo $url . "<p>";
         $curl = curl_init();
         $curlOpts = [
             CURLOPT_URL => $url,
@@ -34,12 +35,15 @@ class OpenAI{
         curl_setopt_array($curl, $curlOpts);
         $response = curl_exec($curl);
         $err = curl_error($curl);
+        //echo "algun error? " . $err . "<p>";
+        //echo "resp = " . $response;
         curl_close($curl);
         return $err ? ["error" => "Error #:" . $err ] : json_decode($response);
     }
 
     private function _removeUnfinishedSentence(string $str):string {
-        return preg_replace("/\.[^.]+$/", "", $str) ?? $str;
+        //return preg_replace("/\.[^.]+$/", "", $str) ?? $str;
+        return $str;
     }
 
     public function search(array $documents, $query): array|stdClass|string {
@@ -64,16 +68,18 @@ class OpenAI{
         $request_body = [
             "prompt" => $prompt,
             "max_tokens" => $max_tokens,
-            "temperature" => 0.7,
             "top_p" => 1,
-            "presence_penalty" => 0.75,
-            "frequency_penalty"=> 0.75,
             "best_of"=> 1,
             "stream" => false,
+            //"temperature" => 0.7,          //These 3 commented because they are sent by the calling function
+            //"presence_penalty" => 0.75,
+            //"frequency_penalty"=> 0.75,
         ];
-
+        
         if(!empty($parameters))
             $request_body = array_merge($request_body, $parameters);
+
+//echo $request_body,   //Uncomment to know full set of parameters as sent
 
         $postFields = json_encode($request_body);
 
